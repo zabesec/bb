@@ -115,6 +115,47 @@ def get_current_scan_domains(conn, scan_id):
     return current_domains
 
 
+def get_all_known_domains(conn, target):
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT DISTINCT name
+        FROM domains
+        WHERE target = %s
+        """,
+        (target,)
+    )
+
+    all_domains = set(row[0] for row in cursor.fetchall())
+    cursor.close()
+
+    return all_domains
+
+
+def mark_domains_inactive(conn, disappeared_domains, target):
+    if not disappeared_domains:
+        return 0
+
+    cursor = conn.cursor()
+    updated = 0
+
+    for domain in disappeared_domains:
+        cursor.execute(
+            """
+            UPDATE domains
+            SET is_active = FALSE
+            WHERE name = %s AND target = %s AND is_active = TRUE
+            """,
+            (domain, target)
+        )
+        updated += cursor.rowcount
+
+    conn.commit()
+    cursor.close()
+    return updated
+
+
 def update_scan_stats(conn, scan_id, total, new_count):
     cursor = conn.cursor()
     cursor.execute(

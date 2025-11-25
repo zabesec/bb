@@ -34,7 +34,7 @@ def run_chaos(domain):
             print(f"[{Colors.GREEN}SUC{Colors.RESET}] Running chaos... {len(domains)} found")
             return domains
         else:
-            print(f"[{Colors.RED}FAIL{Colors.RESET}] Running chaos... 0 found")
+            print(f"[{Colors.RED}FAI{Colors.RESET}] Running chaos... 0 found")
             return []
 
     except subprocess.TimeoutExpired:

@@ -54,7 +54,7 @@ def run_shuffledns(domain, resolvers, wordlist):
             )
             return domains
         else:
-            print(f"[{Colors.RED}FAIL{Colors.RESET}] Running shuffledns... 0 found")
+            print(f"[{Colors.RED}FAI{Colors.RESET}] Running shuffledns... 0 found")
             return []
 
     except subprocess.TimeoutExpired:

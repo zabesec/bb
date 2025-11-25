@@ -29,7 +29,7 @@ def run_assetfinder(domain):
             )
             return domains
         else:
-            print(f"[{Colors.RED}FAIL{Colors.RESET}] Running assetfinder... 0 found")
+            print(f"[{Colors.RED}FAI{Colors.RESET}] Running assetfinder... 0 found")
             return []
 
     except subprocess.TimeoutExpired:

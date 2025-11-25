@@ -47,7 +47,7 @@ def run_crtsh(domain):
             else:
                 spinner.stop()
                 print(
-                    f"[{Colors.RED}FAIL{Colors.RESET}] Running crt.sh... Failed after {max_retries} retries"
+                    f"[{Colors.RED}FAI{Colors.RESET}] Running crt.sh... Failed after {max_retries} retries"
                 )
                 return []
 
@@ -60,5 +60,5 @@ def run_crtsh(domain):
         )
         return domains_list
     else:
-        print(f"[{Colors.RED}FAIL{Colors.RESET}] Running crt.sh... 0 found")
+        print(f"[{Colors.RED}FAI{Colors.RESET}] Running crt.sh... 0 found")
         return []

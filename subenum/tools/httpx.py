@@ -34,7 +34,7 @@ def resolve_domains_httpx(raw_domains_file, output_file):
             return resolved
         else:
             print(
-                f"[{Colors.RED}FAIL{Colors.RESET}] Resolving subdomains... 0 resolved"
+                f"[{Colors.RED}FAI{Colors.RESET}] Resolving subdomains... 0 resolved"
             )
             return []
 

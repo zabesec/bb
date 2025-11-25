@@ -20,35 +20,39 @@ VERSION = "1.0"
 START_TIME = None
 INTERRUPTED = False
 
+
 class Colors:
-    CYAN = '\033[96m'
-    GREEN = '\033[92m'
-    ORANGE = '\033[93m'
-    RED = '\033[91m'
-    RESET = '\033[0m'
-    BOLD = '\033[1m'
-    DIM = '\033[2m'
+    CYAN = "\033[96m"
+    GREEN = "\033[92m"
+    ORANGE = "\033[93m"
+    RED = "\033[91m"
+    RESET = "\033[0m"
+    BOLD = "\033[1m"
+    DIM = "\033[2m"
+
 
 class Spinner:
     def __init__(self, message="Processing"):
-        self.spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+        self.spinner = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
         self.message = message
         self.running = False
         self.thread = None
 
     def spin(self):
-        sys.stdout.write('\033[?25l')
+        sys.stdout.write("\033[?25l")
         sys.stdout.flush()
 
         idx = 0
         while self.running:
-            sys.stdout.write(f'\r\033[K{Colors.CYAN}{self.spinner[idx]}{Colors.RESET} {self.message}')
+            sys.stdout.write(
+                f"\r\033[K{Colors.CYAN}{self.spinner[idx]}{Colors.RESET} {self.message}"
+            )
             sys.stdout.flush()
             idx = (idx + 1) % len(self.spinner)
             time.sleep(0.1)
 
-        sys.stdout.write('\r\033[K')
-        sys.stdout.write('\033[?25h')
+        sys.stdout.write("\r\033[K")
+        sys.stdout.write("\033[?25h")
         sys.stdout.flush()
 
     def start(self):
@@ -61,54 +65,69 @@ class Spinner:
         if self.thread:
             self.thread.join()
 
+
 class Config:
     REQUEST_DELAY = 1.5
     MAX_RETRIES = 3
     RATE_LIMIT_PAUSE = 300
     HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; wayplus/1.0)"}
 
-    JWT_REGEX = re.compile(r'eyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}')
-    JUICY_FIELDS = ["email", "username", "password", "api_key", "access_token",
-                    "session_id", "role", "scope"]
+    JWT_REGEX = re.compile(
+        r"eyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}"
+    )
+    JUICY_FIELDS = [
+        "email",
+        "username",
+        "password",
+        "api_key",
+        "access_token",
+        "session_id",
+        "role",
+        "scope",
+    ]
 
     SECRET_PARAMS = re.compile(
-        r'[?&](code|token|ticket|key|secret|password|pass|pwd|auth|session|sid|jwt|bearer|'
-        r'access_token|refresh_token|api_key|apikey|client_secret|private_key|oauth|callback|'
-        r'redirect|redirect_uri|state|nonce)=',
-        re.IGNORECASE
+        r"[?&](code|token|ticket|key|secret|password|pass|pwd|auth|session|sid|jwt|bearer|"
+        r"access_token|refresh_token|api_key|apikey|client_secret|private_key|oauth|callback|"
+        r"redirect|redirect_uri|state|nonce)=",
+        re.IGNORECASE,
     )
 
     API_PATTERNS = re.compile(
-        r'^https?://api\.|^https?://[^/]+/api(/v[0-9]+)?|/graphql|/graphiql|/playground|'
-        r'/api/v[0-9]+|/v[1-6]/graphql|\.api\.',
-        re.IGNORECASE
+        r"^https?://api\.|^https?://[^/]+/api(/v[0-9]+)?|/graphql|/graphiql|/playground|"
+        r"/api/v[0-9]+|/v[1-6]/graphql|\.api\.",
+        re.IGNORECASE,
     )
 
     STATIC_EXTENSIONS = re.compile(
-        r'\.(js|css|txt|json|xml|pdf|doc|docx|xls|xlsx|ppt|pptx|zip|tar|gz|rar|7z|'
-        r'exe|dmg|pkg|deb|rpm|iso|img|svg|ico|woff|woff2|ttf|eot|otf|mp3|mp4|wav|'
-        r'avi|mov|wmv|flv|webm|ogg|png|jpg|jpeg|gif|bmp|tiff|webp)(\?.*)?$',
-        re.IGNORECASE
+        r"\.(js|css|txt|json|xml|pdf|doc|docx|xls|xlsx|ppt|pptx|zip|tar|gz|rar|7z|"
+        r"exe|dmg|pkg|deb|rpm|iso|img|svg|ico|woff|woff2|ttf|eot|otf|mp3|mp4|wav|"
+        r"avi|mov|wmv|flv|webm|ogg|png|jpg|jpeg|gif|bmp|tiff|webp)(\?.*)?$",
+        re.IGNORECASE,
     )
 
-    GF_PATTERNS = ["idor", "lfi", "rce", "redirect", "sqli", "ssrf", "ssti", "xss"]
-
     DEFAULT_EXTENSIONS = [".zip", ".tar.gz", ".rar", ".sql", ".bak", ".7z", ".gz"]
+
 
 def signal_handler(signum, frame):
     global INTERRUPTED
     INTERRUPTED = True
-    sys.stdout.write('\033[?25h')
+    sys.stdout.write("\033[?25h")
     sys.stdout.flush()
     elapsed = (time.time() - START_TIME) if START_TIME else 0
-    print(f"\n[{Colors.ORANGE}WRN{Colors.RESET}] Scan interrupted {Colors.DIM}({elapsed:.3f}s time elapsed){Colors.RESET}")
+    print(
+        f"\n[{Colors.ORANGE}WRN{Colors.RESET}] Scan interrupted {Colors.DIM}({elapsed:.3f}s time elapsed){Colors.RESET}"
+    )
     sys.exit(130)
+
 
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
 
+
 def print_banner():
-    print(rf"""{Colors.CYAN}
+    print(
+        rf"""{Colors.CYAN}
                            _
 __      ____ _ _   _ _ __ | |_   _ ___
 \ \ /\ / / _` | | | | '_ \| | | | / __|
@@ -117,22 +136,25 @@ __      ____ _ _   _ _ __ | |_   _ ___
                |___/|_|
 {Colors.RESET}
 {Colors.DIM}        Wayback URL Analyzer v{VERSION}{Colors.RESET}
-""")
+"""
+    )
 
 
 def load_file(path, default=None):
     try:
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             return [line.strip() for line in f if line.strip()]
     except FileNotFoundError:
         if default:
             return default
         return []
 
+
 def save_file(path, lines):
     Path(path).parent.mkdir(parents=True, exist_ok=True)
-    with open(path, 'w') as f:
-        f.write('\n'.join(lines))
+    with open(path, "w") as f:
+        f.write("\n".join(lines))
+
 
 def retry_request(url, timeout=30):
     for attempt in range(Config.MAX_RETRIES):
@@ -145,23 +167,40 @@ def retry_request(url, timeout=30):
             return response
         except requests.exceptions.RequestException:
             if attempt < Config.MAX_RETRIES - 1:
-                time.sleep(Config.REQUEST_DELAY * (2 ** attempt))
+                time.sleep(Config.REQUEST_DELAY * (2**attempt))
     return None
+
 
 def fetch_waymore_urls(target, output_dir):
     output_file = f"{output_dir}/urls.txt"
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-    cmd = ["waymore", "-mode", "U", "-t", "5", "-p", "2", "-lr", "60",
-           "-r", "5", "-oU", output_file, "-i", target]
+    cmd = [
+        "waymore",
+        "-mode",
+        "U",
+        "-t",
+        "5",
+        "-p",
+        "2",
+        "-lr",
+        "60",
+        "-r",
+        "5",
+        "-oU",
+        output_file,
+        "-i",
+        target,
+    ]
 
     try:
         print()
-        spinner = Spinner("Fetching URLs from archives...")
+        spinner = Spinner("Fetching URLs using waymore...")
         spinner.start()
 
-        process = subprocess.Popen(cmd, stdout=subprocess.DEVNULL,
-                                  stderr=subprocess.DEVNULL)
+        process = subprocess.Popen(
+            cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
 
         while process.poll() is None:
             time.sleep(0.3)
@@ -170,74 +209,137 @@ def fetch_waymore_urls(target, output_dir):
 
         if process.returncode == 0 and os.path.exists(output_file):
             urls = load_file(output_file)
-            print(f"[{Colors.GREEN}SUC{Colors.RESET}] Found {len(urls)} URLs from archives")
+            print(
+                f"[{Colors.GREEN}SUC{Colors.RESET}] [waymore] Found {Colors.BOLD}{len(urls)}{Colors.RESET} URLs"
+            )
             return urls, output_file
         else:
             print(f"[{Colors.RED}ERR{Colors.RESET}] Failed to fetch URLs")
             return [], None
 
     except FileNotFoundError:
-        print(f"[{Colors.RED}ERR{Colors.RESET}] Waymore not installed. Install: pip install waymore")
+        print(
+            f"[{Colors.RED}ERR{Colors.RESET}] Waymore not installed. Install: pip install waymore"
+        )
         return [], None
     except Exception as e:
         print(f"[{Colors.RED}ERR{Colors.RESET}] Error: {e}")
         return [], None
 
-def crawl_with_katana(target, output_dir, depth=3):
-    output_file = f"{output_dir}/katana.txt"
 
-    cmd = ["katana", "-u", target, "-retry", "3", "-jc", "-d", str(depth), "-o", output_file]
+def fetch_waybackurls(target, output_dir):
+    output_file = f"{output_dir}/waybackurls.txt"
 
     try:
-        spinner = Spinner(f"Crawling target site (depth: {depth})...")
+        spinner = Spinner("Fetching URLs using waybackurls...")
         spinner.start()
 
-        process = subprocess.Popen(cmd, stdout=subprocess.DEVNULL,
-                                  stderr=subprocess.DEVNULL)
+        process = subprocess.Popen(
+            ["waybackurls"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+        )
 
-        while process.poll() is None:
-            time.sleep(0.3)
+        stdout, _ = process.communicate(input=target, timeout=600)
 
         spinner.stop()
 
-        if process.returncode == 0 and os.path.exists(output_file):
-            urls = load_file(output_file)
-            print(f"[{Colors.GREEN}SUC{Colors.RESET}] Found {len(urls)} URLs from crawling")
+        if process.returncode == 0 and stdout.strip():
+            urls = [line.strip() for line in stdout.splitlines() if line.strip()]
+            save_file(output_file, urls)
+            print(
+                f"[{Colors.GREEN}SUC{Colors.RESET}] [waybackurls] Found {Colors.BOLD}{len(urls)}{Colors.RESET} URLs"
+            )
             return urls, output_file
         else:
-            print(f"[{Colors.RED}ERR{Colors.RESET}] Failed to crawl with Katana")
+            print(
+                f"[{Colors.RED}ERR{Colors.RESET}] Failed to fetch URLs using waybackurls"
+            )
             return [], None
 
     except FileNotFoundError:
-        print(f"[{Colors.RED}ERR{Colors.RESET}] Katana not installed. Run `{Colors.DIM}CGO_ENABLED=1 go install github.com/projectdiscovery/katana/cmd/katana@latest{Colors.RESET}` to install.")
+        print(
+            f"[{Colors.RED}ERR{Colors.RESET}] waybackurls not installed. Run `{Colors.DIM}go install github.com/tomnomnom/waybackurls@latest{Colors.RESET}` to install."
+        )
+        return [], None
+    except subprocess.TimeoutExpired:
+        process.kill()
+        spinner.stop()
+        print(f"[{Colors.RED}ERR{Colors.RESET}] waybackurls timed out")
+        return [], None
+    except Exception as e:
+        spinner.stop()
+        print(f"[{Colors.RED}ERR{Colors.RESET}] Error: {e}")
+        return [], None
+
+
+def crawl_with_gospider(target, output_dir, depth=3):
+    output_file = f"{output_dir}/gospider.txt"
+
+    cmd = [
+        "gospider",
+        "-s", f"https://{target}",
+        "--subs",
+        "-a",
+        "-w",
+        "-r",
+        "-d", str(depth)
+    ]
+
+    try:
+        spinner = Spinner(f"Crawling target site (depth: {depth})")
+        spinner.start()
+
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+
+        spinner.stop()
+
+        if result.returncode == 0:
+            url_pattern = re.compile(r"https?://[^\s]+")
+            urls = url_pattern.findall(result.stdout)
+
+            urls = [url[:-1] if url.endswith('.js]') else url for url in urls]
+
+            seen = set()
+            unique_urls = []
+            for url in urls:
+                if url not in seen:
+                    seen.add(url)
+                    unique_urls.append(url)
+
+            if unique_urls:
+                save_file(output_file, unique_urls)
+                print(
+                    f"[{Colors.GREEN}SUC{Colors.RESET}] [gospider] Found {Colors.BOLD}{len(unique_urls)}{Colors.RESET} unique URLs"
+                )
+                return unique_urls, output_file
+            else:
+                print(f"[{Colors.RED}ERR{Colors.RESET}] No URLs found during crawl")
+                return [], None
+
+        else:
+            print(f"[{Colors.RED}ERR{Colors.RESET}] Failed to crawl using gospider")
+            return [], None
+
+    except FileNotFoundError:
+        print(
+            f"[{Colors.RED}ERR{Colors.RESET}] gospider not installed. Run `{Colors.DIM}go install github.com/jaeles-project/gospider@latest{Colors.RESET}` to install."
+        )
+        return [], None
+    except subprocess.TimeoutExpired:
+        print(f"[{Colors.RED}ERR{Colors.RESET}] gospider timed out")
         return [], None
     except Exception as e:
         print(f"[{Colors.RED}ERR{Colors.RESET}] Error: {e}")
         return [], None
 
-def gf_pattern_match(urls_file, pattern, output_dir):
-    try:
-        output_path = f"{output_dir}/{pattern}.txt"
-
-        with open(urls_file, 'r') as f:
-            result = subprocess.run(['gf', pattern], stdin=f, capture_output=True, text=True)
-
-        if result.returncode == 0 and result.stdout.strip():
-            matched = result.stdout.strip().split('\n')
-            save_file(output_path, matched)
-            return matched
-
-        return []
-
-    except FileNotFoundError:
-        return []
-    except Exception:
-        return []
 
 def fetch_compressed_files_urls(target, output_dir, extensions=None):
     extensions = extensions or Config.DEFAULT_EXTENSIONS
 
-    archive_url = f'https://web.archive.org/cdx/search/cdx?url=*.{target}/*&output=txt&fl=original&collapse=urlkey&page=/'
+    archive_url = f"https://web.archive.org/cdx/search/cdx?url=*.{target}/*&output=txt&fl=original&collapse=urlkey&page=/"
 
     spinner = Spinner("Fetching archive data")
     spinner.start()
@@ -260,6 +362,7 @@ def fetch_compressed_files_urls(target, output_dir, extensions=None):
 
     return all_urls
 
+
 def extract_jwt_from_url(url):
     parsed = urlparse(url)
     query_params = parse_qs(parsed.query)
@@ -274,13 +377,16 @@ def extract_jwt_from_url(url):
     match = Config.JWT_REGEX.search(decoded_url)
     return match.group(0) if match else None
 
+
 def check_url_status(url):
     try:
-        resp = requests.head(url, headers=Config.HEADERS,
-                           allow_redirects=True, timeout=10)
+        resp = requests.head(
+            url, headers=Config.HEADERS, allow_redirects=True, timeout=10
+        )
         return url if resp.status_code in [200, 301, 302] else None
     except requests.exceptions.RequestException:
         return None
+
 
 def analyze_jwts_from_urls(urls, output_dir):
     jwt_map = {url: token for url in urls if (token := extract_jwt_from_url(url))}
@@ -312,25 +418,29 @@ def analyze_jwts_from_urls(urls, output_dir):
 
     return 0
 
+
 def extract_subdomains_from_urls(urls, root_domain=None):
     subdomains = set()
     for url in urls:
         if match := re.search(r"https?://([a-zA-Z0-9.-]+)", url):
-            domain = match.group(1).lower().split(':')[0]
+            domain = match.group(1).lower().split(":")[0]
             if not root_domain or domain.endswith(root_domain):
                 subdomains.add(domain)
 
     return list(subdomains)
 
+
 def extract_parameters(urls):
-    param_regex = re.compile(r'\?([^#]+)')
+    param_regex = re.compile(r"\?([^#]+)")
     seen = set()
     results = []
 
     for url in urls:
         if match := param_regex.search(url):
             param_segment = match.group(1)
-            param_pairs = [p.split('=')[0] for p in param_segment.split('&') if '=' in p]
+            param_pairs = [
+                p.split("=")[0] for p in param_segment.split("&") if "=" in p
+            ]
 
             if param_pairs:
                 key = tuple(sorted(set(param_pairs)))
@@ -340,9 +450,11 @@ def extract_parameters(urls):
 
     return results
 
+
 def find_keyword(urls, keyword):
     matches = [u for u in urls if keyword.lower() in u.lower()]
     return matches
+
 
 def extract_secret_urls(urls, output_dir):
     secret = [url for url in urls if Config.SECRET_PARAMS.search(url)]
@@ -353,15 +465,20 @@ def extract_secret_urls(urls, output_dir):
 
     return secret
 
+
 def extract_api_urls(urls, output_dir):
-    api_urls = [url for url in urls
-                if Config.API_PATTERNS.search(url) and not Config.STATIC_EXTENSIONS.search(url)]
+    api_urls = [
+        url
+        for url in urls
+        if Config.API_PATTERNS.search(url) and not Config.STATIC_EXTENSIONS.search(url)
+    ]
 
     if api_urls:
         output_path = f"{output_dir}/apis.txt"
         save_file(output_path, api_urls)
 
     return api_urls
+
 
 def extract_static_urls(urls, output_dir):
     static_urls = [url for url in urls if Config.STATIC_EXTENSIONS.search(url)]
@@ -371,6 +488,7 @@ def extract_static_urls(urls, output_dir):
         save_file(output_path, static_urls)
 
     return static_urls
+
 
 def run_automated_analysis(urls, urls_file, target, output_dir):
     results = {}
@@ -423,7 +541,9 @@ def run_automated_analysis(urls, urls_file, target, output_dir):
     spinner.stop()
     results["static_files"] = len(static_files)
     if static_files:
-        print(f"[{Colors.GREEN}+{Colors.RESET}] Static files: {len(static_files)} found")
+        print(
+            f"[{Colors.GREEN}+{Colors.RESET}] Static files: {len(static_files)} found"
+        )
     else:
         print(f"[{Colors.RED}-{Colors.RESET}] Static files: 0 found")
 
@@ -461,40 +581,48 @@ def run_automated_analysis(urls, urls_file, target, output_dir):
 
     spinner = Spinner("Searching for compressed files")
     spinner.start()
-    compressed = fetch_compressed_files_urls(target, output_dir, load_file("extensions.txt", Config.DEFAULT_EXTENSIONS))
+    compressed = fetch_compressed_files_urls(
+        target, output_dir, load_file("extensions.txt", Config.DEFAULT_EXTENSIONS)
+    )
     spinner.stop()
     results["compressed"] = len(compressed)
     if compressed:
-        print(f"[{Colors.GREEN}+{Colors.RESET}] Compressed files: {len(compressed)} found")
+        print(
+            f"[{Colors.GREEN}+{Colors.RESET}] Compressed files: {len(compressed)} found"
+        )
     else:
         print(f"[{Colors.RED}-{Colors.RESET}] Compressed files: 0 found")
 
-    for pattern in Config.GF_PATTERNS:
-        spinner = Spinner(f"Scanning for {pattern.upper()} patterns")
-        spinner.start()
-        matched = gf_pattern_match(urls_file, pattern, output_dir)
-        spinner.stop()
-        results[pattern] = len(matched)
-        if matched:
-            print(f"[{Colors.GREEN}+{Colors.RESET}] {pattern.upper()} patterns: {len(matched)} matches")
-        else:
-            print(f"[{Colors.RED}-{Colors.RESET}] {pattern.upper()} patterns: 0 found")
-
     return results
+
 
 def print_summary(results, output_dir):
     print(f"\n[{Colors.CYAN}INF{Colors.RESET}] Results saved to: {output_dir}")
 
     elapsed = time.time() - START_TIME
-    print(f"[{Colors.CYAN}INF{Colors.RESET}] Scan finished {Colors.DIM}({elapsed:.3f}s time elapsed){Colors.RESET}\n")
+    print(
+        f"[{Colors.CYAN}INF{Colors.RESET}] Scan finished {Colors.DIM}({elapsed:.3f}s time elapsed){Colors.RESET}\n"
+    )
+
 
 def main():
     global START_TIME
 
-    parser = argparse.ArgumentParser(description='Wayback URL Analyzer')
-    parser.add_argument('-d', required=True, metavar="example.com", help='Target domain')
-    parser.add_argument('-output', required=True, metavar="output_dir/", help='Output directory')
-    parser.add_argument('-c', type=int, metavar="depth", help='Enable crawling with specified depth (default: 3)', nargs='?', const=3)
+    parser = argparse.ArgumentParser(description="Wayback URL Analyzer")
+    parser.add_argument(
+        "-d", required=True, metavar="example.com", help="Target domain"
+    )
+    parser.add_argument(
+        "-output", required=True, metavar="output_dir/", help="Output directory"
+    )
+    parser.add_argument(
+        "-c",
+        type=int,
+        metavar="depth",
+        help="Enable crawling with specified depth (default: 3)",
+        nargs="?",
+        const=3,
+    )
 
     args = parser.parse_args()
 
@@ -506,30 +634,35 @@ def main():
 
     urls, urls_file = fetch_waymore_urls(target, output_dir)
     if not urls:
-        print(f"[{Colors.RED}ERR{Colors.RESET}] Failed to fetch URLs")
+        print(f"[{Colors.RED}ERR{Colors.RESET}] Failed to fetch URLs using waymore")
         return
+
+    wayback_urls, wayback_file = fetch_waybackurls(target, output_dir)
+    if wayback_urls:
+        urls = list(set(urls + wayback_urls))
 
     if args.c is not None:
         depth = args.c if args.c > 0 else 3
-        katana_urls, katana_file = crawl_with_katana(target, output_dir, depth)
+        gospider_urls, gospider_file = crawl_with_gospider(target, output_dir, depth)
 
-        if katana_urls:
-            all_urls = list(set(urls + katana_urls))
-            combined_file = f"{output_dir}/combined.txt"
-            save_file(combined_file, all_urls)
-            print(f"[{Colors.CYAN}INF{Colors.RESET}] Filtered {len(all_urls)} unique URLs\n")
-            urls = all_urls
-            urls_file = combined_file
+        if gospider_urls:
+            urls = list(set(urls + gospider_urls))
+
+    combined_file = f"{output_dir}/combined.txt"
+    save_file(combined_file, urls)
+    print(f"[{Colors.CYAN}INF{Colors.RESET}] Found total of {len(urls)} unique URLs")
+    urls_file = combined_file
 
     results = run_automated_analysis(urls, urls_file, target, output_dir)
 
     print_summary(results, output_dir)
 
+
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        sys.stdout.write('\033[?25h')
+        sys.stdout.write("\033[?25h")
         sys.stdout.flush()
         print(f"\n[{Colors.ORANGE}WRN{Colors.RESET}] Interrupted by user")
         sys.exit(0)

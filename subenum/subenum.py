@@ -11,10 +11,9 @@ from pathlib import Path
 
 from config import RESOLVERS, SUBDOMAINS_WORDLIST
 from db.connection import get_db_connection
-from db.operations import (create_scan, get_previous_scan_domains,
-                           is_first_scan, purge_target_data,
+from db.operations import (create_scan, is_first_scan, purge_target_data,
                            store_domains_batch, store_open_ports,
-                           store_resolutions, update_scan_stats)
+                           store_resolutions)
 from db.schema import init_database
 from reports.diff import generate_diff_report
 from reports.export import export_to_files
@@ -88,10 +87,17 @@ def main():
     parser.add_argument("-s", action="store_true", help="Take screenshots")
     parser.add_argument("-o", metavar="output/", help="Output directory")
     parser.add_argument("-export", action="store_true", help="Export results to files")
-    parser.add_argument("-debug", action="store_true", help="Save debug files")
     parser.add_argument("-purge", action="store_true", help="Purge target's previous data")
 
     args = parser.parse_args()
+
+    if args.export and not args.o:
+        print(f"[{Colors.RED}ERR{Colors.RESET}] -export requires -o (output directory)")
+        sys.exit(1)
+
+    if args.s and not args.o:
+        print(f"[{Colors.RED}ERR{Colors.RESET}] -s (screenshots) requires -o (output directory)")
+        sys.exit(1)
 
     print_banner()
     START_TIME = time.time()
@@ -183,7 +189,7 @@ def main():
             store_resolutions(conn, resolved_urls, args.d)
 
             if args.ps:
-                save_port_file = args.o and (args.debug or args.export)
+                save_port_file = args.o
                 port_results = run_port_scan(
                     resolved_file, args.r, args.ps, args.o if save_port_file else None
                 )
@@ -193,16 +199,10 @@ def main():
             if args.s:
                 run_screenshots(resolved_file, output_dir)
 
-        if not args.debug:
+        if not args.o:
             for file in (raw_domains_file, resolved_file):
                 if os.path.exists(file):
                     os.remove(file)
-
-    new_count = total_found if first_scan else len(
-        all_domains - (get_previous_scan_domains(conn, args.d) or set())
-    )
-
-    update_scan_stats(conn, scan_id, total_found, new_count)
 
     generate_diff_report(conn, scan_id, args.d)
 
@@ -216,7 +216,7 @@ def main():
 
     elapsed = time.time() - START_TIME
     print(
-        f"\n[{Colors.CYAN}INF{Colors.RESET}] Scan finished {Colors.DIM}({elapsed:.2f}s elapsed){Colors.RESET}"
+        f"\n[{Colors.CYAN}INF{Colors.RESET}] Scan finished {Colors.DIM}({elapsed:.2f}s time elapsed){Colors.RESET}"
     )
 
 

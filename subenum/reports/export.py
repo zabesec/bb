@@ -19,7 +19,7 @@ def export_to_files(conn, scan_id, output_dir):
         (scan_id,),
     )
 
-    with open(f"{output_dir}/domains.txt", "w") as f:
+    with open(f"{output_dir}/domains-tracked.txt", "w") as f:
         for row in cursor.fetchall():
             f.write(f"{row[0]}\n")
 

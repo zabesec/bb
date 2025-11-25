@@ -61,7 +61,7 @@ def run_port_scan(domains_file, resolvers, width, output_dir=None):
             return results
         else:
             print(
-                f"[{Colors.RED}FAIL{Colors.RESET}] Scanning for open ports... 0 open ports"
+                f"[{Colors.RED}FAI{Colors.RESET}] Scanning for open ports... 0 open ports"
             )
             return []
 
