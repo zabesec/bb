@@ -6,6 +6,8 @@ import subprocess
 from utils.colors import Colors
 from utils.spinner import Spinner
 
+from config import NAABU_CONFIG
+
 TIMEOUT_PORTSCAN = 3600
 
 
@@ -26,10 +28,12 @@ def run_port_scan(domains_file, resolvers, width, output_dir=None):
     spinner.start()
 
     try:
+        config_arg = f" -config {NAABU_CONFIG}" if NAABU_CONFIG else ""
+
         if resolvers and os.path.exists(resolvers):
-            cmd = f"cat {domains_file} | dnsx -silent -r {resolvers} -a -resp-only | naabu -silent -tp {width}"
+            cmd = f"cat {domains_file} | dnsx -silent -r {resolvers} -a -resp-only | naabu -silent -tp {width}{config_arg}"
         else:
-            cmd = f"cat {domains_file} | dnsx -silent -a -resp-only | naabu -silent -tp {width}"
+            cmd = f"cat {domains_file} | dnsx -silent -a -resp-only | naabu -silent -tp {width}{config_arg}"
 
         result = subprocess.run(
             cmd,

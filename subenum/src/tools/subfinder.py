@@ -2,7 +2,7 @@
 
 import subprocess
 
-from config import TIMEOUT_DEFAULT
+from config import SUBFINDER_CONFIG, TIMEOUT_DEFAULT
 from utils.colors import Colors
 from utils.spinner import Spinner
 
@@ -12,8 +12,13 @@ def run_subfinder(domain):
     spinner.start()
 
     try:
+        cmd = ["subfinder", "-silent", "-all", "-recursive", "-d", domain]
+
+        if SUBFINDER_CONFIG:
+            cmd.extend(["-pc", SUBFINDER_CONFIG])
+
         result = subprocess.run(
-            ["subfinder", "-silent", "-all", "-recursive", "-d", domain],
+            cmd,
             capture_output=True,
             text=True,
             timeout=TIMEOUT_DEFAULT,

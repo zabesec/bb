@@ -2,9 +2,10 @@
 
 import subprocess
 
-from config import TIMEOUT_DEFAULT
 from utils.colors import Colors
 from utils.spinner import Spinner
+
+from config import FINDOMAIN_CONFIG, TIMEOUT_DEFAULT
 
 
 def run_findomain(domain):
@@ -12,8 +13,13 @@ def run_findomain(domain):
     spinner.start()
 
     try:
+        cmd = ["findomain", "-t", domain, "-q"]
+
+        if FINDOMAIN_CONFIG:
+            cmd.extend(["--config", FINDOMAIN_CONFIG])
+
         result = subprocess.run(
-            ["findomain", "-t", domain, "-q"],
+            cmd,
             capture_output=True,
             text=True,
             timeout=TIMEOUT_DEFAULT,

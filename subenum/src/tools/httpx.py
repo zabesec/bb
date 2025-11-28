@@ -5,6 +5,8 @@ import subprocess
 from utils.colors import Colors
 from utils.spinner import Spinner
 
+from config import HTTPX_CONFIG
+
 TIMEOUT_HTTPX = 1800
 
 
@@ -13,7 +15,9 @@ def resolve_domains_httpx(raw_domains_file, output_file):
     spinner.start()
 
     try:
-        cmd = f"cat {raw_domains_file} | httpx -silent -nc -o {output_file}"
+        config_arg = f" -config {HTTPX_CONFIG}" if HTTPX_CONFIG else ""
+        cmd = f"cat {raw_domains_file} | httpx -silent -nc{config_arg} -o {output_file}"
+
         subprocess.run(
             cmd,
             shell=True,

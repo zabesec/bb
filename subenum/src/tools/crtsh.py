@@ -10,7 +10,7 @@ from utils.spinner import Spinner
 
 
 def run_crtsh(domain):
-    spinner = Spinner("Running crt.sh...")
+    spinner = Spinner("Fetching crt.sh domains...")
     spinner.start()
 
     max_retries = 3

@@ -30,9 +30,6 @@ def verify_tools(args):
     if args.ps:
         required.extend(["dnsx", "naabu"])
 
-    if args.s:
-        required.append("gowitness")
-
     if os.environ.get("CHAOS_API_KEY"):
         if check_tool("chaos"):
             optional.append("chaos")

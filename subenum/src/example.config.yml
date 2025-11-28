@@ -1,0 +1,37 @@
+database_url: postgresql://subenum:subenum@subenum-db:5432/subenum
+
+chaos_api_key: ""
+
+timeouts:
+    default: 900
+    shuffledns: 3600
+    portscan: 3600
+
+paths:
+    resolvers: "/wordlists/resolvers.txt"
+    subdomains_wordlist: "/wordlists/internal-subdomains.txt"
+
+tool_config_paths:
+    subfinder: ""
+    findomain: ""
+    httpx: ""
+    naabu: ""
+
+scheduler:
+    enabled: true
+    times:
+        - "00:00"
+        - "04:00"
+        - "08:00"
+        - "12:00"
+        - "16:00"
+        - "20:00"
+    targets: []
+
+notifications:
+    discord:
+        enabled: false
+        webhook_url: ""
+        notify_on_new: false
+        notify_on_reappeared: false
+        max_domains_shown: 10

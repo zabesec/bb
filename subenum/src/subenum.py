@@ -9,6 +9,8 @@ import tempfile
 import time
 from pathlib import Path
 
+import yaml
+
 from config import RESOLVERS, SUBDOMAINS_WORDLIST
 from db.connection import get_db_connection
 from db.operations import (create_scan, is_first_scan, purge_target_data,
@@ -21,7 +23,6 @@ from tools.assetfinder import run_assetfinder
 from tools.chaos import run_chaos
 from tools.crtsh import run_crtsh
 from tools.findomain import run_findomain
-from tools.gowitness import run_screenshots
 from tools.httpx import resolve_domains_httpx
 from tools.naabu import run_port_scan
 from tools.shuffledns import run_shuffledns
@@ -71,6 +72,14 @@ def print_banner():
     )
 
 
+def load_config():
+    config_path = os.path.join(os.path.dirname(__file__), "config.yml")
+    if os.path.exists(config_path):
+        with open(config_path, "r") as f:
+            return yaml.safe_load(f)
+    return {}
+
+
 def main():
     global START_TIME, conn, scan_id
 
@@ -79,28 +88,38 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
-    parser.add_argument("-d", required=True, metavar="example.com", help="Target domain")
-    parser.add_argument("-sd", action="store_true", help="Run DNS bruteforcing with shuffledns")
-    parser.add_argument("-r", metavar="resolvers.txt", help="Resolvers file for shuffledns")
-    parser.add_argument("-w", metavar="wordlist.txt", help="Wordlist file for shuffledns")
+    parser.add_argument(
+        "-d", required=True, metavar="example.com", help="Target domain"
+    )
+    parser.add_argument(
+        "-sd", action="store_true", help="Run DNS bruteforcing with shuffledns"
+    )
+    parser.add_argument(
+        "-r", metavar="resolvers.txt", help="Resolvers file for shuffledns"
+    )
+    parser.add_argument(
+        "-w", metavar="wordlist.txt", help="Wordlist file for shuffledns"
+    )
     parser.add_argument("-ps", metavar="WIDTH", help="Port scan: 100, 1000, full")
-    parser.add_argument("-s", action="store_true", help="Take screenshots")
     parser.add_argument("-o", metavar="output/", help="Output directory")
     parser.add_argument("-export", action="store_true", help="Export results to files")
-    parser.add_argument("-purge", action="store_true", help="Purge target's previous data")
+    parser.add_argument(
+        "-purge", action="store_true", help="Purge target's previous data"
+    )
 
     args = parser.parse_args()
+
+    if args.o:
+        args.o = args.o.rstrip("/")
 
     if args.export and not args.o:
         print(f"[{Colors.RED}ERR{Colors.RESET}] -export requires -o (output directory)")
         sys.exit(1)
 
-    if args.s and not args.o:
-        print(f"[{Colors.RED}ERR{Colors.RESET}] -s (screenshots) requires -o (output directory)")
-        sys.exit(1)
-
     print_banner()
     START_TIME = time.time()
+
+    config = load_config()
 
     conn = get_db_connection()
     init_database(conn)
@@ -125,7 +144,9 @@ def main():
             sys.exit(1)
 
     if args.ps and args.ps not in ["100", "1000", "full"]:
-        print(f"[{Colors.RED}ERR{Colors.RESET}] Port scan width must be 100, 1000, or full")
+        print(
+            f"[{Colors.RED}ERR{Colors.RESET}] Port scan width must be 100, 1000, or full"
+        )
         conn.close()
         sys.exit(1)
 
@@ -146,7 +167,7 @@ def main():
     )
 
     if args.o:
-        output_dir = args.o
+        output_dir = os.path.abspath(args.o)
         Path(output_dir).mkdir(parents=True, exist_ok=True)
         use_temp = False
     else:
@@ -196,15 +217,12 @@ def main():
                 if port_results:
                     store_open_ports(conn, scan_id, port_results, args.d)
 
-            if args.s:
-                run_screenshots(resolved_file, output_dir)
-
         if not args.o:
             for file in (raw_domains_file, resolved_file):
                 if os.path.exists(file):
                     os.remove(file)
 
-    generate_diff_report(conn, scan_id, args.d)
+    generate_diff_report(conn, scan_id, args.d, config)
 
     if args.export or (first_scan and args.o):
         export_to_files(conn, scan_id, args.o or output_dir)
