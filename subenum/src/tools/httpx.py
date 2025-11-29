@@ -15,7 +15,7 @@ def resolve_domains_httpx(raw_domains_file, output_file, no_spinner=False):
 
     try:
         config_arg = f" -config {HTTPX_CONFIG}" if HTTPX_CONFIG else ""
-        cmd = f"cat {raw_domains_file} | httpx -silent -nc{config_arg} -o {output_file}"
+        cmd = f"cat {raw_domains_file} | httpx -silent -nc {config_arg} -o {output_file}"
 
         subprocess.run(
             cmd,
