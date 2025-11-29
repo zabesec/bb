@@ -4,7 +4,7 @@ import os
 import subprocess
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import yaml
@@ -27,7 +27,8 @@ def load_config():
                 with open(config_path, "r") as f:
                     return yaml.safe_load(f)
             except Exception as e:
-                print(f"[SCHEDULER] Error loading config from {config_path}: {e}")
+                timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                print(f"[{timestamp}] Error loading config from {config_path}: {e}")
 
     return None
 
@@ -42,64 +43,77 @@ def get_targets_from_db():
         conn.close()
         return targets
     except Exception as e:
-        print(f"[SCHEDULER] Error fetching targets from database: {e}")
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        print(f"[{timestamp}] Error fetching targets from database: {e}")
         return []
 
 
 def run_scan(target):
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
     if not target:
-        print("[SCHEDULER] No target provided, skipping scan")
+        print(f"[{timestamp}] No target provided, skipping scan")
         return 1
 
     script_path = Path(__file__).parent / "subenum.py"
-    print(f"[SCHEDULER] Starting scan for {target} at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"[{timestamp}] Starting scan for {target}")
 
     result = subprocess.run(
-        [sys.executable, str(script_path), "-sd", "-d", target],
+        [sys.executable, str(script_path), "-ns", "-sd", "-d", target],
         stdout=sys.stdout,
         stderr=sys.stderr
     )
 
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     if result.returncode == 0:
-        print(f"[SCHEDULER] Completed scan for {target}")
+        print(f"[{timestamp}] Completed scan for {target}")
     else:
-        print(f"[SCHEDULER] Failed scan for {target} (exit code {result.returncode})")
+        print(f"[{timestamp}] Failed scan for {target} (exit code {result.returncode})")
 
     return result.returncode
 
 
 def get_next_run_time(schedule_times):
     now = datetime.now()
-    current_time = now.strftime("%H:%M")
+    current_time = now.time()
 
-    for scheduled_time in sorted(schedule_times):
-        if scheduled_time > current_time:
-            hour, minute = map(int, scheduled_time.split(":"))
-            next_run = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
-            return next_run
+    schedule_time_objects = []
+    for scheduled_time in schedule_times:
+        hour, minute = map(int, scheduled_time.split(":"))
+        schedule_time_objects.append((hour, minute))
 
-    hour, minute = map(int, sorted(schedule_times)[0].split(":"))
+    schedule_time_objects.sort()
+
+    for hour, minute in schedule_time_objects:
+        scheduled = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+        if scheduled > now:
+            return scheduled
+
+    hour, minute = schedule_time_objects[0]
     next_run = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
-    from datetime import timedelta
     next_run = next_run + timedelta(days=1)
     return next_run
 
 
 def main():
-    print("[SCHEDULER] Subdomain Enumeration Scheduler Started")
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    print(f"[{timestamp}] Subdomain Enumeration Scheduler Started")
 
     while True:
-        print(f"[SCHEDULER] [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Loading configuration...")
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        print(f"[{timestamp}] Loading configuration...")
         config = load_config()
 
         if not config:
-            print("[SCHEDULER] No config file found. Waiting 5 minutes...")
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            print(f"[{timestamp}] No config file found. Waiting 5 minutes...")
             time.sleep(300)
             continue
 
         if not config.get("scheduler", {}).get("enabled"):
-            print("[SCHEDULER] Scheduler is disabled in config.yml")
-            print("[SCHEDULER] Waiting 5 minutes...")
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            print(f"[{timestamp}] Scheduler is disabled in config.yml")
+            print(f"[{timestamp}] Waiting 5 minutes...")
             time.sleep(300)
             continue
 
@@ -109,31 +123,36 @@ def main():
 
         if config_targets and len(config_targets) > 0:
             targets = config_targets
-            print(f"[SCHEDULER] Targets from config: {', '.join(targets)}")
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            print(f"[{timestamp}] Targets from config: {', '.join(targets)}")
         else:
             targets = get_targets_from_db()
             if targets:
-                print(f"[SCHEDULER] Targets from database: {', '.join(targets)}")
+                timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                print(f"[{timestamp}] Targets from database: {', '.join(targets)}")
 
         if not targets:
-            print("[SCHEDULER] No targets found in config or database")
-            print("[SCHEDULER] Waiting 5 minutes before checking again...")
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            print(f"[{timestamp}] No targets found in config or database")
+            print(f"[{timestamp}] Waiting 5 minutes before checking again...")
             time.sleep(300)
             continue
 
         notifications = config.get("notifications", {})
         discord_enabled = notifications.get("discord", {}).get("enabled", False)
 
-        print(f"[SCHEDULER] Schedule times: {', '.join(sorted(schedule_times))}")
-        print(f"[SCHEDULER] Target count: {len(targets)}")
-        print(f"[SCHEDULER] Discord notifications: {'ENABLED' if discord_enabled else 'DISABLED'}")
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        print(f"[{timestamp}] Schedule times: {', '.join(sorted(schedule_times))}")
+        print(f"[{timestamp}] Target count: {len(targets)}")
+        print(f"[{timestamp}] Discord notifications: {'ENABLED' if discord_enabled else 'DISABLED'}")
 
         next_run = get_next_run_time(schedule_times)
         now = datetime.now()
         sleep_seconds = (next_run - now).total_seconds()
 
-        print(f"[SCHEDULER] Next scan scheduled: {next_run.strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"[SCHEDULER] Waiting {sleep_seconds:.0f} seconds ({sleep_seconds/3600:.1f} hours)...")
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        print(f"[{timestamp}] Next scan scheduled: {next_run.strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"[{timestamp}] Waiting {sleep_seconds:.0f} seconds ({sleep_seconds/3600:.1f} hours)...")
 
         remaining = sleep_seconds
         check_interval = 300
@@ -146,14 +165,17 @@ def main():
             time.sleep(check_interval)
             remaining -= check_interval
             hours_left = remaining / 3600
-            print(f"[SCHEDULER] Still waiting... {hours_left:.1f} hours until next scan")
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            print(f"[{timestamp}] Still waiting... {hours_left:.1f} hours until next scan")
 
-        print(f"[SCHEDULER] [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Scan time reached!")
-        print("[SCHEDULER] Reloading config before starting scans...")
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        print(f"[{timestamp}] Scan time reached!")
+        print(f"[{timestamp}] Reloading config before starting scans...")
 
         config = load_config()
         if not config or not config.get("scheduler", {}).get("enabled"):
-            print("[SCHEDULER] Scheduler was disabled, skipping this cycle")
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            print(f"[{timestamp}] Scheduler was disabled, skipping this cycle")
             continue
 
         config_targets = config.get("scheduler", {}).get("targets", [])
@@ -163,17 +185,20 @@ def main():
             targets = get_targets_from_db()
 
         if not targets:
-            print("[SCHEDULER] No targets found, skipping this cycle")
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            print(f"[{timestamp}] No targets found, skipping this cycle")
             continue
 
-        print(f"[SCHEDULER] Starting scan cycle for {len(targets)} target(s)")
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        print(f"[{timestamp}] Starting scan cycle for {len(targets)} target(s)")
 
         success_count = 0
         fail_count = 0
         start_time = time.time()
 
         for i, target in enumerate(targets, 1):
-            print(f"[SCHEDULER] [{i}/{len(targets)}] Scanning: {target}")
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            print(f"[{timestamp}] [{i}/{len(targets)}] Scanning: {target}")
             result = run_scan(target)
             if result == 0:
                 success_count += 1
@@ -185,17 +210,20 @@ def main():
 
         total_duration = time.time() - start_time
 
-        print(f"[SCHEDULER] Scan cycle completed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"[SCHEDULER] Duration: {total_duration/60:.1f} minutes")
-        print(f"[SCHEDULER] Results: {success_count} succeeded, {fail_count} failed")
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        print(f"[{timestamp}] Scan cycle completed")
+        print(f"[{timestamp}] Duration: {total_duration/60:.1f} minutes")
+        print(f"[{timestamp}] Results: {success_count} succeeded, {fail_count} failed")
 
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\n[SCHEDULER] Stopped by user")
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        print(f"\n[{timestamp}] Stopped by user")
         sys.exit(0)
     except Exception as e:
-        print(f"\n[SCHEDULER] Fatal error: {e}")
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        print(f"\n[{timestamp}] Fatal error: {e}")
         sys.exit(1)

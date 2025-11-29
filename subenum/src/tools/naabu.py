@@ -3,15 +3,14 @@
 import os
 import subprocess
 
+from config import NAABU_CONFIG
 from utils.colors import Colors
 from utils.spinner import Spinner
-
-from config import NAABU_CONFIG
 
 TIMEOUT_PORTSCAN = 3600
 
 
-def run_port_scan(domains_file, resolvers, width, output_dir=None):
+def run_port_scan(domains_file, resolvers, width, output_dir=None, no_spinner=False):
     if not os.path.exists(domains_file):
         print(
             f"[{Colors.RED}ERR{Colors.RESET}] Scanning for open ports... Domains file not found"
@@ -24,7 +23,7 @@ def run_port_scan(domains_file, resolvers, width, output_dir=None):
         )
         return []
 
-    spinner = Spinner("Scanning for open ports...")
+    spinner = Spinner("Scanning for open ports...", disabled=no_spinner)
     spinner.start()
 
     try:

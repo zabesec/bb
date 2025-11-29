@@ -106,8 +106,16 @@ def main():
     parser.add_argument(
         "-purge", action="store_true", help="Purge target's previous data"
     )
+    parser.add_argument(
+        "-ns", action="store_true", help="Disable spinner animations"
+    )
+
 
     args = parser.parse_args()
+
+    if args.ns:
+        sys.stdout.write("\033[?25l")
+        sys.stdout.flush()
 
     if args.o:
         args.o = args.o.rstrip("/")
@@ -183,13 +191,13 @@ def main():
         (run_crtsh, "crtsh"),
         (run_chaos, "chaos"),
     ]:
-        domains = tool_func(args.d)
+        domains = tool_func(args.d, no_spinner=args.ns)
         if domains:
             store_domains_batch(conn, scan_id, domains, args.d, name)
             all_domains.update(domains)
 
     if args.sd:
-        domains = run_shuffledns(args.d, args.r, args.w)
+        domains = run_shuffledns(args.d, args.r, args.w, no_spinner=args.ns)
         if domains:
             store_domains_batch(conn, scan_id, domains, args.d, "shuffledns")
             all_domains.update(domains)
@@ -204,7 +212,7 @@ def main():
             for domain in sorted(all_domains):
                 f.write(f"{domain}\n")
 
-        resolved_urls = resolve_domains_httpx(raw_domains_file, resolved_file)
+        resolved_urls = resolve_domains_httpx(raw_domains_file, resolved_file, no_spinner=args.ns)
 
         if resolved_urls:
             store_resolutions(conn, resolved_urls, args.d)
@@ -212,7 +220,7 @@ def main():
             if args.ps:
                 save_port_file = args.o
                 port_results = run_port_scan(
-                    resolved_file, args.r, args.ps, args.o if save_port_file else None
+                    resolved_file, args.r, args.ps, args.o if save_port_file else None, no_spinner=args.ns
                 )
                 if port_results:
                     store_open_ports(conn, scan_id, port_results, args.d)
@@ -236,6 +244,10 @@ def main():
     print(
         f"\n[{Colors.CYAN}INF{Colors.RESET}] Scan finished {Colors.DIM}({elapsed:.2f}s time elapsed){Colors.RESET}"
     )
+
+    if args.ns:
+        sys.stdout.write("\033[?25h")
+        sys.stdout.flush()
 
 
 if __name__ == "__main__":

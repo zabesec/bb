@@ -8,11 +8,12 @@ from .colors import Colors
 
 
 class Spinner:
-    def __init__(self, message="Processing"):
+    def __init__(self, message="Processing", disabled=False):
         self.spinner = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
         self.message = message
         self.running = False
         self.thread = None
+        self.disabled = disabled
 
     def spin(self):
         sys.stdout.write("\033[?25l")
@@ -32,11 +33,19 @@ class Spinner:
         sys.stdout.flush()
 
     def start(self):
+        if self.disabled:
+            sys.stdout.write(f"[{Colors.CYAN}INF{Colors.RESET}] {self.message}")
+            sys.stdout.flush()
+            return
         self.running = True
         self.thread = threading.Thread(target=self.spin, daemon=True)
         self.thread.start()
 
     def stop(self):
+        if self.disabled:
+            sys.stdout.write("\r\033[K")
+            sys.stdout.flush()
+            return
         self.running = False
         if self.thread:
             self.thread.join()

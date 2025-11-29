@@ -9,13 +9,13 @@ from utils.spinner import Spinner
 TIMEOUT_CHAOS = 900
 
 
-def run_chaos(domain):
+def run_chaos(domain, no_spinner=False):
     api_key = os.environ.get('CHAOS_API_KEY')
     if not api_key:
         print(f"[{Colors.ORANGE}SKIP{Colors.RESET}] Running chaos... CHAOS_API_KEY not set")
         return []
 
-    spinner = Spinner("Running chaos...")
+    spinner = Spinner("Running chaos..." , disabled=no_spinner)
     spinner.start()
 
     try:

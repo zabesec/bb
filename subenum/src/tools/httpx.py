@@ -2,16 +2,15 @@
 
 import subprocess
 
+from config import HTTPX_CONFIG
 from utils.colors import Colors
 from utils.spinner import Spinner
-
-from config import HTTPX_CONFIG
 
 TIMEOUT_HTTPX = 1800
 
 
-def resolve_domains_httpx(raw_domains_file, output_file):
-    spinner = Spinner("Resolving subdomains...")
+def resolve_domains_httpx(raw_domains_file, output_file, no_spinner=False):
+    spinner = Spinner("Resolving subdomains...", disabled=no_spinner)
     spinner.start()
 
     try:

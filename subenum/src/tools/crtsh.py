@@ -9,8 +9,8 @@ from utils.colors import Colors
 from utils.spinner import Spinner
 
 
-def run_crtsh(domain):
-    spinner = Spinner("Fetching crt.sh domains...")
+def run_crtsh(domain, no_spinner=False):
+    spinner = Spinner("Fetching crt.sh domains...", disabled=no_spinner)
     spinner.start()
 
     max_retries = 3

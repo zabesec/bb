@@ -2,14 +2,13 @@
 
 import subprocess
 
+from config import FINDOMAIN_CONFIG, TIMEOUT_DEFAULT
 from utils.colors import Colors
 from utils.spinner import Spinner
 
-from config import FINDOMAIN_CONFIG, TIMEOUT_DEFAULT
 
-
-def run_findomain(domain):
-    spinner = Spinner("Running findomain...")
+def run_findomain(domain, no_spinner=False):
+    spinner = Spinner("Running findomain...", disabled=no_spinner)
     spinner.start()
 
     try:

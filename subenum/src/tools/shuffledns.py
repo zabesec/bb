@@ -9,7 +9,7 @@ from utils.spinner import Spinner
 TIMEOUT_SHUFFLEDNS = 3600
 
 
-def run_shuffledns(domain, resolvers, wordlist):
+def run_shuffledns(domain, resolvers, wordlist, no_spinner=False):
     if not os.path.exists(resolvers):
         print(
             f"[{Colors.RED}ERR{Colors.RESET}] Running shuffledns... Resolvers file not found"
@@ -22,7 +22,7 @@ def run_shuffledns(domain, resolvers, wordlist):
         )
         return []
 
-    spinner = Spinner("Running shuffledns...")
+    spinner = Spinner("Running shuffledns...", disabled=no_spinner)
     spinner.start()
 
     try:

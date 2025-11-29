@@ -7,8 +7,8 @@ from utils.colors import Colors
 from utils.spinner import Spinner
 
 
-def run_assetfinder(domain):
-    spinner = Spinner("Running assetfinder...")
+def run_assetfinder(domain, no_spinner=False):
+    spinner = Spinner("Running subfinder...", disabled=no_spinner)
     spinner.start()
 
     try:

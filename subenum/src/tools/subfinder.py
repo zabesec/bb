@@ -7,8 +7,8 @@ from utils.colors import Colors
 from utils.spinner import Spinner
 
 
-def run_subfinder(domain):
-    spinner = Spinner("Running subfinder...")
+def run_subfinder(domain, no_spinner=False):
+    spinner = Spinner("Running subfinder...", disabled=no_spinner)
     spinner.start()
 
     try:
