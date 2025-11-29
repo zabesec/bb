@@ -84,7 +84,7 @@ def main():
     global START_TIME, conn, scan_id
 
     parser = argparse.ArgumentParser(
-        description="Subdomain enumeration with Neon database tracking",
+        description="Subdomain enumeration with database tracking",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 

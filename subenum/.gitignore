@@ -1,7 +1,5 @@
 # Ignore config files except the example template
 config/*
-output/*
-wordlists/*
 src/config.yml
 
 __pycache__/
