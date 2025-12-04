@@ -1,0 +1,11 @@
+services:
+  bb-domains:
+    build: .
+    container_name: bb-domains
+    environment:
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+    restart: unless-stopped
+
+
+# RElTQ09SRF9XRUJIT09LX1VSTD1odHRwczovL2Rpc2NvcmQuY29tL2FwaS93ZWJob29rcy8xNDQ1NDQ4NjYzNTg0MzQyMTg5L3NfRVpEUXhlMGFiUkNveV81cEdhbzVxblNldWF5T0xUY1oxbUUxVWt2QWo5UTIzZmRPQ2FFRVhRcThUc2NsRVRiUE1DO0dJVEhVQl9UT0tFTj1naHBfalRwVndnalY4Y2JTSmtUMmxUMmRjM3lDZkJaY01uMTBpWWdUCg==
