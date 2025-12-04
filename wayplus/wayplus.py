@@ -336,6 +336,62 @@ def crawl_with_gospider(target, output_dir, depth=3):
         return [], None
 
 
+def detect_redirects_with_gf(urls_file, output_dir):
+    output_file = f"{output_dir}/redirect.txt"
+
+    try:
+        spinner = Spinner("Detecting open redirect patterns with gf")
+        spinner.start()
+
+        with open(urls_file, 'r') as f:
+            process = subprocess.Popen(
+                ["gf", "redirect"],
+                stdin=f,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                text=True
+            )
+
+            stdout, _ = process.communicate(timeout=120)
+
+        spinner.stop()
+
+        if process.returncode == 0 and stdout.strip():
+            redirect_urls = [line.strip() for line in stdout.splitlines() if line.strip()]
+
+            seen = set()
+            unique_redirects = []
+            for url in redirect_urls:
+                if url not in seen:
+                    seen.add(url)
+                    unique_redirects.append(url)
+
+            if unique_redirects:
+                save_file(output_file, unique_redirects)
+                return unique_redirects
+            else:
+                return []
+        else:
+            return []
+
+    except FileNotFoundError:
+        print(
+            f"[{Colors.RED}ERR{Colors.RESET}] gf not installed. Run `{Colors.DIM}go install github.com/tomnomnom/gf@latest{Colors.RESET}` to install."
+        )
+        print(
+            f"[{Colors.ORANGE}WRN{Colors.RESET}] Also ensure gf patterns are installed: `{Colors.DIM}git clone https://github.com/1ndianl33t/Gf-Patterns ~/.gf{Colors.RESET}`"
+        )
+        return []
+    except subprocess.TimeoutExpired:
+        spinner.stop()
+        print(f"[{Colors.RED}ERR{Colors.RESET}] gf redirect timed out")
+        return []
+    except Exception as e:
+        spinner.stop()
+        print(f"[{Colors.RED}ERR{Colors.RESET}] Error running gf: {e}")
+        return []
+
+
 def fetch_compressed_files_urls(target, output_dir, extensions=None):
     extensions = extensions or Config.DEFAULT_EXTENSIONS
 
@@ -568,6 +624,13 @@ def run_automated_analysis(urls, urls_file, target, output_dir):
         print(f"[{Colors.GREEN}+{Colors.RESET}] Config URLs: {len(config_urls)} found")
     else:
         print(f"[{Colors.RED}-{Colors.RESET}] Config URLs: 0 found")
+
+    redirect_urls = detect_redirects_with_gf(urls_file, output_dir)
+    results["redirects"] = len(redirect_urls)
+    if redirect_urls:
+        print(f"[{Colors.GREEN}+{Colors.RESET}] Open Redirect URLs: {len(redirect_urls)} found")
+    else:
+        print(f"[{Colors.RED}-{Colors.RESET}] Open Redirect URLs: 0 found")
 
     spinner = Spinner("Analyzing JWT tokens")
     spinner.start()

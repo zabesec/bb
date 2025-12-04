@@ -1,6 +1,7 @@
 services:
-  subenum-db:
+  postgres:
     image: postgres:16-alpine
+    container_name: subenum-db
     environment:
       POSTGRES_USER: subenum
       POSTGRES_PASSWORD: subenum
@@ -9,39 +10,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U subenum"]
-      interval: 5s
-      retries: 10
-
-  subenum:
-    build: .
-    image: subenum:latest
-    cap_add:
-      - NET_RAW
-      - NET_ADMIN
-    volumes:
-      - .:/app
-      - ./config:/root/.config
-      - ./wordlists:/wordlists
-    environment:
-      - CHAOS_API_KEY=${CHAOS_API_KEY}
-
-  subenum-scheduler:
-    build: .
-    image: subenum-scheduler:latest
-    depends_on:
-      - subenum-db
-    volumes:
-      - .:/app
-      - ./config:/root/.config
-      - ./wordlists:/wordlists
-    working_dir: /app
-    environment:
-      - CHAOS_API_KEY=${CHAOS_API_KEY}
-      - PYTHONUNBUFFERED=1
-    command: src/scheduler.py
-    restart: unless-stopped
 
 volumes:
   postgres_data:
