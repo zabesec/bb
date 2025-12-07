@@ -1,7 +1,7 @@
 services:
   scanner:
     build: .
-    container_name: cve-2023-36845
+    container_name: shodan-dork
     environment:
       - COOKIE_URL=${COOKIE_URL}
       - TARGETS_URL=${TARGETS_URL}

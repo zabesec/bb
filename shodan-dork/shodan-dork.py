@@ -17,15 +17,32 @@ CHECK_INTERVAL = 14400
 
 SEARCH_QUERIES = [
     {'hash': '2141724739', 'name': 'Juniper Networks'},
-    {'query': 'http.html:"wp-content/plugins/elementor-pro"', 'name': 'Elementor Pro'},
+    {'query': 'http.component:"Atlassian Confluence" http.status:200', 'name': 'Confluence'},
+    {'query': 'http.component:"PHP" port:80,443,8080', 'name': 'PHP CGI Windows'},
+    {'query': 'http.title:"Dashboard [Jenkins]"', 'name': 'Jenkins'},
+    {'query': 'X-Jenkins port:8080', 'name': 'Jenkins Alt'},
+    {'query': 'http.title:"HugeGraph" port:8080', 'name': 'HugeGraph Server'},
+    {'query': 'product:"OpenSSH" port:22', 'name': 'OpenSSH RegreSSHion'},
+    {'query': 'http.title:"HFS" "Rejetto"', 'name': 'Rejetto HFS'},
+    {'query': 'http.html:"Rejetto" port:80,8080', 'name': 'Rejetto HFS Alt'},
+    {'query': 'http.title:"Fortinet"', 'name': 'FortiOS Management'},
+    {'query': 'http.html:"fortinet" port:443,4433', 'name': 'Fortinet Devices'},
+    {'query': 'http.title:"Ivanti Connect Secure"', 'name': 'Ivanti Connect Secure'},
+    {'query': 'http.html:"Pulse Secure"', 'name': 'Pulse Secure'},
+    {'query': 'http.html:"NetAlertX" port:80,8080', 'name': 'NetAlertX'},
+    {'query': 'http.component:"Next.js" http.status:200', 'name': 'Next.js Apps'},
+    {'query': 'http.html:"__next" port:3000,80,443', 'name': 'Next.js Apps Alt'},
     {'query': 'http.title:"FortiNAC"', 'name': 'FortiNAC'},
-    {'query': 'http.title:"CrushFTP"', 'name': 'CrushFTP'},
-    {'query': 'http.html:"DEBUG = True"', 'name': 'Django Debug'},
+    {'query': 'http.title:"CrushFTP" -cloudflare', 'name': 'CrushFTP'},
+    {'query': 'http.html:"wp-content/plugins/elementor-pro"', 'name': 'WordPress Elementor Pro'},
     {'query': 'http.title:"ColdFusion Administrator"', 'name': 'ColdFusion Admin'},
-    {'query': 'http.title:"Confluence" -cloudflare', 'name': 'Confluence'},
-    {'query': 'http.title:"Prometheus Time Series', 'name':'Prometheus'},
-    {'query': 'http.title:"SonarQube" -"auth" -"login" "public"', 'name': 'SonarQube Public'}
+    {'query': 'http.title:"Apache Tomcat" port:8080,8443', 'name': 'Tomcat Manager'},
+    {'query': 'http.title:"Grafana" -login port:3000', 'name': 'Grafana'},
+    {'query': 'http.title:"SonarQube" -auth', 'name': 'SonarQube'},
+    {'query': 'http.title:"RabbitMQ Management"', 'name': 'RabbitMQ'},
+    {'query': 'http.title:"Kubernetes Dashboard"', 'name': 'Kubernetes Dashboard'}
 ]
+
 
 def fetch_from_url(url):
     cmd = ['curl', '-s', url]
@@ -109,7 +126,7 @@ def scrape_shodan(query_obj, target):
         return False, None, None
 
     if 'hash' in query_obj:
-        search_query = f"http.favicon.hash:{query_obj['hash']} Ssl:{target}"
+        search_query = f"http.favicon.hash:{query_obj['hash']} ssl:{target}"
     else:
         search_query = f"{query_obj['query']} ssl:{target}"
 
@@ -242,7 +259,7 @@ def scan_targets(cookie_url, targets_url, webhook_url):
         for query_obj in SEARCH_QUERIES:
             has_results, search_url, query_name = scrape_shodan(query_obj, target)
             if has_results and search_url:
-                print(f"[+] Results found for {query_obj['name']}")
+                print(f"[success] Results found for {query_obj['name']}")
                 send_discord_webhook(webhook_url, target, search_url, query_name)
                 total_results += 1
             else:

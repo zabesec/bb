@@ -11,6 +11,6 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY CVE-2023-36845.py .
+COPY shodan-dork.py .
 
-CMD ["python", "-u", "CVE-2023-36845.py"]
+CMD ["python", "-u", "shodan-dork.py"]

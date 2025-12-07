@@ -24,7 +24,6 @@ curl -s -k https://example.com/json/setup-restore.action
 curl -s -k https://example.com/?x=${(111*111)}
 curl -s -k https://example.com/pages/createpage-entervariables.action
 
-
 http.title:"Prometheus Time Series ssl:example.com
 curl -s https://example.com:9090/api/v1/targets
 curl -s https://example.com:9090/api/v1/rules

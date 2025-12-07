@@ -1,6 +1,3 @@
-uberinternal.com
-ubereats.com
-uber.com
 netflix.com
 remitly.io
 int.remitly.com
