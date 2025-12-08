@@ -302,7 +302,7 @@ def scan_targets(cookie_url, targets_url, webhook_url):
                 print(f"[x] No results for {query_obj['name']}")
 
             if query_obj != SEARCH_QUERIES[-1]:
-                delay = random.uniform(3, 4)
+                delay = random.uniform(2, 4)
                 print(f"\n[-] Waiting {delay:.1f}s before next query...\n")
                 time.sleep(delay)
 
