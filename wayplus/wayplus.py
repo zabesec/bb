@@ -93,11 +93,6 @@ class Config:
         re.IGNORECASE,
     )
 
-    REDIRECT_PARAMS = re.compile(
-        r"[?&](returnUrl|continue|dest|destination|forward|go|goto|login\?to|login_url|logout|next|next_page|out|g|redir|redirect|redirect_to|redirect_uri|redirect_url|return|returnTo|return_path|return_to|return_url|rurl|site|target|to|uri|url|qurl|rit_url|jump|jump_url|originUrl|origin|Url|desturl|u|Redirect|location|ReturnUrl|redirect_link|forward_to|forward_url|destination_url|jump_to|go_to|goto_url|target_url|view|window|next_url|load|file|folder|path|navigation|nav|open|page|show|checkout|checkout_url|success|success_url|failure|failure_url|error|error_url|done|done_url|complete|complete_url|callback_url|fallback|fallback_url|back|back_url|backurl|link|href|ref|reference|source|src|load_url|page_url|view_url|landing|landing_url|final|final_url)=",
-        re.IGNORECASE,
-    )
-
     API_PATTERNS = re.compile(
         r"^https?://api\.|^https?://[^/]+/api(/v[0-9]+)?|/graphql|/graphiql|/playground|"
         r"/api/v[0-9]+|/v[1-6]/graphql|\.api\.",
@@ -249,7 +244,7 @@ def fetch_waybackurls(target, output_dir):
             text=True,
         )
 
-        stdout, _ = process.communicate(input=target, timeout=600)
+        stdout, _ = process.communicate(input=target, timeout=3600)
 
         spinner.stop()
 
@@ -299,10 +294,10 @@ def crawl_with_katana(target, output_dir, depth=3):
     ]
 
     try:
-        spinner = Spinner(f"Crawling target site (depth: {depth})")
+        spinner = Spinner(f"Crawling target site...")
         spinner.start()
 
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=3600)
 
         spinner.stop()
 
@@ -344,123 +339,6 @@ def crawl_with_katana(target, output_dir, depth=3):
         spinner.stop()
         print(f"[{Colors.RED}ERR{Colors.RESET}] Error: {e}")
         return [], None
-
-
-def detect_redirects_with_gf(urls_file, output_dir):
-    output_file = f"{output_dir}/redirect.txt"
-
-    try:
-        spinner = Spinner("Detecting open redirect patterns with gf")
-        spinner.start()
-
-        with open(urls_file, 'r') as f:
-            process = subprocess.Popen(
-                ["gf", "redirect"],
-                stdin=f,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.DEVNULL,
-                text=True
-            )
-
-            stdout, _ = process.communicate(timeout=120)
-
-        spinner.stop()
-
-        if process.returncode == 0 and stdout.strip():
-            redirect_urls = [line.strip() for line in stdout.splitlines() if line.strip()]
-
-            seen = set()
-            unique_redirects = []
-            for url in redirect_urls:
-                if url not in seen:
-                    seen.add(url)
-                    unique_redirects.append(url)
-
-            if unique_redirects:
-                save_file(output_file, unique_redirects)
-                return unique_redirects
-            else:
-                return []
-        else:
-            return []
-
-    except FileNotFoundError:
-        spinner.stop()
-        print(
-            f"[{Colors.RED}ERR{Colors.RESET}] gf not installed. Run `{Colors.DIM}go install github.com/tomnomnom/gf@latest{Colors.RESET}` to install."
-        )
-        print(
-            f"[{Colors.ORANGE}WRN{Colors.RESET}] Also ensure gf patterns are installed: `{Colors.DIM}git clone https://github.com/1ndianl33t/Gf-Patterns ~/.gf{Colors.RESET}`"
-        )
-        return []
-    except subprocess.TimeoutExpired:
-        spinner.stop()
-        print(f"[{Colors.RED}ERR{Colors.RESET}] gf redirect timed out")
-        return []
-    except Exception as e:
-        spinner.stop()
-        print(f"[{Colors.RED}ERR{Colors.RESET}] Error running gf: {e}")
-        return []
-
-
-def detect_open_redirects(urls, output_dir):
-    redirect_urls = [url for url in urls if Config.REDIRECT_PARAMS.search(url)]
-
-    if not redirect_urls:
-        return []
-
-    version1_urls = []
-    version2_urls = []
-
-    try:
-        qsreplace_available = subprocess.run(
-            ["which", "qsreplace"],
-            capture_output=True,
-            text=True
-        ).returncode == 0
-    except Exception:
-        qsreplace_available = False
-
-    if qsreplace_available:
-        try:
-            process = subprocess.Popen(
-                ["qsreplace", "https://google.com"],
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.DEVNULL,
-                text=True
-            )
-            stdout, _ = process.communicate(input="\n".join(redirect_urls), timeout=60)
-
-            if process.returncode == 0 and stdout.strip():
-                version1_urls = [line.strip() for line in stdout.splitlines() if line.strip()]
-        except Exception:
-            pass
-
-    for url in redirect_urls:
-        parsed = urlparse(url)
-        query_params = parse_qs(parsed.query, keep_blank_values=True)
-
-        redirect_param_found = None
-        for param in query_params.keys():
-            if Config.REDIRECT_PARAMS.search(f"?{param}="):
-                redirect_param_found = param
-                break
-
-        if redirect_param_found:
-            new_params = {redirect_param_found: query_params[redirect_param_found]}
-            new_query = "&".join([f"{k}={v[0]}" for k, v in new_params.items()])
-            cleaned_url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}?{new_query}"
-            version2_urls.append(cleaned_url)
-
-    if version1_urls:
-        save_file(f"{output_dir}/open-redirect-1.txt", version1_urls)
-
-    if version2_urls:
-        save_file(f"{output_dir}/open-redirect-2.txt", version2_urls)
-
-    return version1_urls if version1_urls else version2_urls
-
 
 def fetch_compressed_files_urls(target, output_dir, extensions=None):
     extensions = extensions or Config.DEFAULT_EXTENSIONS
@@ -694,16 +572,6 @@ def run_automated_analysis(urls, urls_file, target, output_dir):
         print(f"[{Colors.GREEN}+{Colors.RESET}] Config URLs: {len(config_urls)} found")
     else:
         print(f"[{Colors.RED}-{Colors.RESET}] Config URLs: 0 found")
-
-    spinner = Spinner("Detecting open redirect URLs")
-    spinner.start()
-    redirect_urls = detect_open_redirects(urls, output_dir)
-    spinner.stop()
-    results["redirects"] = len(redirect_urls)
-    if redirect_urls:
-        print(f"[{Colors.GREEN}+{Colors.RESET}] Open Redirect URLs: {len(redirect_urls)} found")
-    else:
-        print(f"[{Colors.RED}-{Colors.RESET}] Open Redirect URLs: 0 found")
 
     spinner = Spinner("Analyzing JWT tokens")
     spinner.start()

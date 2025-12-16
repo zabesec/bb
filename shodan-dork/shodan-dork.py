@@ -48,6 +48,8 @@ SEARCH_QUERIES = [
     {"query": 'http.title:"RabbitMQ Management"', "name": "RabbitMQ"},
     {"query": 'http.title:"Kubernetes Dashboard"', "name": "Kubernetes Dashboard"},
     {"query": 'http.html:"webvpn" cisco', "name": "Cisco ASA WebVPN"},
+    {"query": '"Microsoft-IIS"', "name": "Microsoft IIS Server"},
+    {"query": 'http.title:"httpbin"', "name": "HTTP Bin Server"},
 ]
 
 

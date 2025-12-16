@@ -2,12 +2,14 @@
 
 import argparse
 import json
+import os
 import random
 import re
 import string
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
+from typing import Optional
 from urllib.parse import urlparse
 
 try:
@@ -293,7 +295,7 @@ def check_vulnerability(
         is_vulnerable = is_vulnerable_safe_check
 
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36 Assetnote/1.0.0",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36 R2S/0.6.9",
         "Next-Action": "x",
         "X-Nextjs-Request-Id": "b5dce965",
         "Content-Type": content_type,
@@ -403,7 +405,9 @@ def save_results(results: list[dict], output_file: str):
     try:
         with open(output_file, "w") as f:
             json.dump(output, f, indent=2)
-        print(f"\n[{colorize('info', Colors.CYAN)}] Results saved to {output_file}")
+        print(
+            f"\n[{colorize('info', Colors.CYAN)}] Scan finished. Results saved to {output_file}"
+        )
     except Exception as e:
         print(f"\n[{colorize('error', Colors.RED)}] Failed to save results: {e}")
 
